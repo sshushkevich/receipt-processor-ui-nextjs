@@ -1,7 +1,7 @@
+import { ReceiptForm } from "./ui/receipt-form";
+
 export default function Home() {
   return (
-    <form>
-      
-    </form>
+    <ReceiptForm/>
   );
 }

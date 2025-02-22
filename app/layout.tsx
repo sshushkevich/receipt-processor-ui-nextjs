@@ -7,7 +7,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <head>
+        <link href="https://fonts.cdnfonts.com/css/ocr-a" rel="stylesheet" />
+      </head>
+      <body className="bg-gray-100 antialiased">{children}</body>
     </html>
   );
 }

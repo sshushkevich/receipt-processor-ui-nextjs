@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ReceiptItemInput } from "./receipt-item-input";
 import { Receipt, ReceiptItem } from "../lib/interfaces";
 
@@ -10,9 +10,11 @@ export function ReceiptForm() {
     retailer: "",
     purchaseDate: "",
     purchaseTime: "",
-    total: "",
+    total: "0",
     items: [{ shortDescription: "", price: "" }],
   });
+
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,6 +31,7 @@ export function ReceiptForm() {
       ...Receipt,
       items: updatedItems,
     });
+    updateTotal();
   };
 
   const addReceiptItem = () => {
@@ -36,15 +39,34 @@ export function ReceiptForm() {
       ...Receipt,
       items: [...Receipt.items, { shortDescription: "", price: "" }],
     });
+
+    setTimeout(() => {
+      if (inputRefs.current[Receipt.items.length]) {
+        inputRefs.current[Receipt.items.length]?.focus();
+      }
+    }, 0);
   };
 
   const removeReceiptItem = (index: number) => {
     const updatedItems =
       Receipt.items.length > 1 ? Receipt.items.toSpliced(index, 1) : [{ shortDescription: "", price: "" }];
-
     setReceipt({
       ...Receipt,
       items: updatedItems,
+    });
+    updateTotal();
+  };
+
+  const updateTotal = () => {
+    setReceipt((prevState) => {
+      const totalAmount = prevState.items.reduce((sum, item) => {
+        return sum + (parseFloat(item.price) || 0);
+      }, 0);
+
+      return {
+        ...prevState,
+        total: totalAmount.toFixed(2),
+      };
     });
   };
 
@@ -60,110 +82,88 @@ export function ReceiptForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-        <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-          <div className="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
-            <div className="max-w-md mx-auto">
-              <div className="flex items-center space-x-5">
-                <div className="h-14 w-14 bg-yellow-200 rounded-full flex flex-shrink-0 justify-center items-center text-yellow-500 text-2xl font-mono">
-                  RP
-                </div>
-                <div className="block pl-2 font-semibold text-xl self-start text-gray-700">
-                  <h2 className="leading-relaxed">Receipt Processor</h2>
-                  <p className="text-sm text-gray-500 font-normal leading-relaxed">
-                    Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-                  </p>
-                </div>
-              </div>
+      <div className="sm:max-w-xl sm:mx-auto">
+        <div className="bg-white font-ocr px-6 py-10 text-gray-700 shadow">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label htmlFor="retailer" className="leading-loose">
+                Retailer:
+              </label>
+              <input
+                type="text"
+                id="retailer"
+                name="retailer"
+                placeholder="e.g. Target"
+                value={Receipt.retailer}
+                className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                onChange={handleChange}
+                autoFocus
+              />
+            </div>
 
-              <div className="divide-y divide-gray-200">
-                <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                  <div className="flex flex-col">
-                    <label htmlFor="retailer" className="leading-loose">
-                      Retailer:
-                    </label>
-                    <input
-                      type="text"
-                      id="retailer"
-                      name="retailer"
-                      placeholder="e.g. Target"
-                      value={Receipt.retailer}
-                      className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label htmlFor="purchaseDate" className="leading-loose">
-                      Purchase Date:
-                    </label>
-                    <input
-                      type="text"
-                      id="purchaseDate"
-                      name="purchaseDate"
-                      value={Receipt.purchaseDate}
-                      className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label htmlFor="purchaseTime" className="leading-loose">
-                      Purchase Time:
-                    </label>
-                    <input
-                      type="text"
-                      id="purchaseTime"
-                      name="purchaseTime"
-                      value={Receipt.purchaseTime}
-                      className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label htmlFor="total" className="leading-loose">
-                      Total:
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      id="total"
-                      name="total"
-                      value={Receipt.total}
-                      className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <h3>Purchased Items</h3>
-                    <div>
-                      <button type="button" onClick={addReceiptItem}>
-                        Add Item
-                      </button>
-                    </div>
-                    {Receipt.items.map((item, idx) => (
-                      <ReceiptItemInput
-                        key={idx}
-                        index={idx}
-                        item={item}
-                        onChange={handleReceiptItemChange}
-                        onRemove={removeReceiptItem}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 flex items-center space-x-4">
-                <button
-                  type="submit"
-                  className="bg-blue-500 flex justify-center items-center w-full text-white px-4 py-3 rounded-md focus:outline-none"
-                >
-                  Submit
-                </button>
-              </div>
+            <div className="">
+              <label htmlFor="purchaseDate" className="leading-loose">
+                Purchase Date:
+              </label>
+              <input
+                type="text"
+                id="purchaseDate"
+                name="purchaseDate"
+                value={Receipt.purchaseDate}
+                className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                onChange={handleChange}
+              />
+            </div>
+            <div className="">
+              <label htmlFor="purchaseTime" className="leading-loose">
+                Purchase Time:
+              </label>
+              <input
+                type="text"
+                id="purchaseTime"
+                name="purchaseTime"
+                value={Receipt.purchaseTime}
+                className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
+                onChange={handleChange}
+              />
             </div>
           </div>
+
+          <div className="border-t border-dashed border-gray-300 my-10"></div>
+
+          <div>
+            <h3 className="text-center uppercase pb-4">Purchased Items:</h3>
+
+            {Receipt.items.map((item, idx) => (
+              <ReceiptItemInput
+                key={idx}
+                index={idx}
+                item={item}
+                onChange={handleReceiptItemChange}
+                onRemove={removeReceiptItem}
+                inputRef={(el: HTMLInputElement | null) => (inputRefs.current[idx] = el)}
+              />
+            ))}
+
+            <div className="pt-4">
+              <button type="button" className="text-green-800" onClick={addReceiptItem}>
+                + Add Item
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-dashed border-gray-300 my-10"></div>
+
+          <div className="text-right">
+            <span className="leading-loose">Total: ${Receipt.total}</span>
+          </div>
         </div>
+      </div>
+
+      <div className="py-6 flex justify-center">
+        <button type="submit" className="bg-blue-500 text-white px-4 py-3 rounded-md">
+          Submit Receipt
+        </button>
       </div>
     </form>
   );

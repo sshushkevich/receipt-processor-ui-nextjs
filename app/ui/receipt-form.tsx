@@ -4,7 +4,7 @@ import axios from "axios";
 import clsx from "clsx";
 import { useRef, useState } from "react";
 import { ReceiptItemInput } from "./receipt-item-input";
-import { Receipt, ReceiptItem } from "../lib/interfaces";
+import { Receipt, ReceiptItem, ReceiptPointsItem, ReceiptPointsResponse, ReceiptResponse } from "../lib/interfaces";
 import { receiptExamples } from "../lib/receipt-examples";
 
 export function ReceiptForm() {
@@ -18,6 +18,7 @@ export function ReceiptForm() {
 
   const [receipt, setReceipt] = useState<Receipt>(emptyReceipt);
   const [loading, setLoading] = useState(false);
+  const [recentlyAddedReceipts, setRecentlyAddedReceipts] = useState<ReceiptPointsItem[]>([]);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -80,7 +81,21 @@ export function ReceiptForm() {
     setLoading(true);
 
     try {
-      const resp = await axios.post("http://localhost:3001/receipts/process", receipt);
+      const receiptResp = await axios.post<ReceiptResponse>("http://localhost:3001/receipts/process", receipt);
+
+      axios
+        .get<ReceiptPointsResponse>(`http://localhost:3001/receipts/${receiptResp.data.id}/points`)
+        .then(function (pointsResp) {
+          setRecentlyAddedReceipts((prevState) => [
+            { id: receiptResp.data.id, points: pointsResp.data.points },
+            ...prevState,
+          ]);
+        })
+        .catch(function (error) {
+          setRecentlyAddedReceipts((prevState) => [{ id: receiptResp.data.id, points: 0 }, ...prevState]);
+          console.error(`Unable to fetch points - ${error}`);
+        });
+
       resetForm();
     } catch (error) {
       alert(`Unable to submit the receipt - ${error}`);
@@ -214,7 +229,24 @@ export function ReceiptForm() {
         </form>
       </div>
 
-      <div className=""></div>
+      <div className="">
+        <h3>Processed Receipts:</h3>
+        <ul className="list-none">
+          {recentlyAddedReceipts.map((rct) => (
+            <li key={rct.id} className="my-2">
+              <span
+                className={clsx("text-black px-3 py-1 rounded-full", {
+                  "bg-rose-100": rct.points < 20,
+                  "bg-purple-100": rct.points >= 20 && rct.points < 50,
+                  "bg-teal-100": rct.points >= 50,
+                })}
+              >
+                {rct.id} - <span className="font-bold">{rct.points}</span> pts
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

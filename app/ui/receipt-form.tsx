@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "axios";
+import clsx from "clsx";
 import { useRef, useState } from "react";
 import { ReceiptItemInput } from "./receipt-item-input";
 import { Receipt, ReceiptItem } from "../lib/interfaces";
@@ -15,23 +16,24 @@ export function ReceiptForm() {
     items: [{ shortDescription: "", price: "" }],
   };
 
-  const [Receipt, setReceipt] = useState<Receipt>(emptyReceipt);
+  const [receipt, setReceipt] = useState<Receipt>(emptyReceipt);
+  const [loading, setLoading] = useState(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setReceipt({
-      ...Receipt,
+      ...receipt,
       [name]: value,
     });
   };
 
   const handleReceiptItemChange = (index: number, field: keyof ReceiptItem, value: string) => {
-    const updatedItems = [...Receipt.items];
+    const updatedItems = [...receipt.items];
     updatedItems[index][field] = value;
     setReceipt({
-      ...Receipt,
+      ...receipt,
       items: updatedItems,
     });
     updateTotal();
@@ -39,22 +41,22 @@ export function ReceiptForm() {
 
   const addReceiptItem = () => {
     setReceipt({
-      ...Receipt,
-      items: [...Receipt.items, { shortDescription: "", price: "" }],
+      ...receipt,
+      items: [...receipt.items, { shortDescription: "", price: "" }],
     });
 
     setTimeout(() => {
-      if (inputRefs.current[Receipt.items.length]) {
-        inputRefs.current[Receipt.items.length]?.focus();
+      if (inputRefs.current[receipt.items.length]) {
+        inputRefs.current[receipt.items.length]?.focus();
       }
     }, 0);
   };
 
   const removeReceiptItem = (index: number) => {
     const updatedItems =
-      Receipt.items.length > 1 ? Receipt.items.toSpliced(index, 1) : [{ shortDescription: "", price: "" }];
+      receipt.items.length > 1 ? receipt.items.toSpliced(index, 1) : [{ shortDescription: "", price: "" }];
     setReceipt({
-      ...Receipt,
+      ...receipt,
       items: updatedItems,
     });
     updateTotal();
@@ -75,12 +77,15 @@ export function ReceiptForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("submit form: ");
+    setLoading(true);
+
     try {
-      const resp = await axios.post("http://localhost:3001/receipts/process", Receipt);
+      const resp = await axios.post("http://localhost:3001/receipts/process", receipt);
       resetForm();
     } catch (error) {
-      console.log(`error: ${error}`);
+      alert(`Unable to submit the receipt - ${error}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,7 +130,7 @@ export function ReceiptForm() {
                     id="retailer"
                     name="retailer"
                     placeholder="e.g. Target"
-                    value={Receipt.retailer}
+                    value={receipt.retailer}
                     className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     onChange={handleChange}
                     autoFocus
@@ -140,7 +145,7 @@ export function ReceiptForm() {
                     type="text"
                     id="purchaseDate"
                     name="purchaseDate"
-                    value={Receipt.purchaseDate}
+                    value={receipt.purchaseDate}
                     className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     onChange={handleChange}
                   />
@@ -153,7 +158,7 @@ export function ReceiptForm() {
                     type="text"
                     id="purchaseTime"
                     name="purchaseTime"
-                    value={Receipt.purchaseTime}
+                    value={receipt.purchaseTime}
                     className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     onChange={handleChange}
                   />
@@ -165,7 +170,7 @@ export function ReceiptForm() {
               <div>
                 <h3 className="text-center uppercase pb-4">Purchased Items:</h3>
 
-                {Receipt.items.map((item, idx) => (
+                {receipt.items.map((item, idx) => (
                   <ReceiptItemInput
                     key={idx}
                     index={idx}
@@ -186,7 +191,7 @@ export function ReceiptForm() {
               <div className="border-t border-dashed border-gray-300 my-10"></div>
 
               <div className="text-right">
-                <span className="leading-loose">Total: ${Receipt.total}</span>
+                <span className="leading-loose">Total: ${receipt.total}</span>
               </div>
             </div>
           </div>
@@ -195,8 +200,15 @@ export function ReceiptForm() {
             <button type="button" className="bg-blue-100 text-gray-700 px-4 py-3 mr-4 rounded-md" onClick={resetForm}>
               Reset
             </button>
-            <button type="submit" className="bg-blue-500 text-white px-4 py-3 rounded-md">
-              Submit Receipt
+            <button
+              type="submit"
+              className={clsx("px-4 py-3 rounded-md", {
+                "bg-gray-200 text-gray-500": loading,
+                "bg-blue-500 text-white": !loading,
+              })}
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Submit Receipt"}
             </button>
           </div>
         </form>

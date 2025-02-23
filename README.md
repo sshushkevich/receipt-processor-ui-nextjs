@@ -5,6 +5,7 @@ This is a simple user interface (UI) developed using Next.js, primarily for demo
 
 This UI allows users to input receipt data and calculate the corresponding points automatically upon submission:
 
+![Receipt UI Example](ui.png)
 
 ## Tech stack
 - Next.js

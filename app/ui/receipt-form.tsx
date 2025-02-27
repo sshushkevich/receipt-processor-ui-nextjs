@@ -195,7 +195,9 @@ export function ReceiptForm() {
                     item={item}
                     onChange={handleReceiptItemChange}
                     onRemove={removeReceiptItem}
-                    inputRef={(el: HTMLInputElement | null) => (inputRefs.current[idx] = el)}
+                    inputRef={(el: HTMLInputElement | null) => {
+                      inputRefs.current[idx] = el;
+                    }}
                   />
                 ))}
 

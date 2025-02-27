@@ -149,6 +149,7 @@ export function ReceiptForm() {
                     className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     onChange={handleChange}
                     autoFocus
+                    required
                   />
                 </div>
 
@@ -157,12 +158,13 @@ export function ReceiptForm() {
                     Purchase Date:
                   </label>
                   <input
-                    type="text"
+                    type="date"
                     id="purchaseDate"
                     name="purchaseDate"
                     value={receipt.purchaseDate}
                     className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     onChange={handleChange}
+                    required
                   />
                 </div>
                 <div className="">
@@ -170,12 +172,13 @@ export function ReceiptForm() {
                     Purchase Time:
                   </label>
                   <input
-                    type="text"
+                    type="time"
                     id="purchaseTime"
                     name="purchaseTime"
                     value={receipt.purchaseTime}
                     className="px-4 py-2 border focus:ring-gray-500 focus:border-gray-900 w-full sm:text-sm border-gray-300 rounded-md focus:outline-none text-gray-600"
                     onChange={handleChange}
+                    required
                   />
                 </div>
               </div>

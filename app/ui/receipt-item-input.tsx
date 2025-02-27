@@ -23,6 +23,7 @@ export function ReceiptItemInput({ index, item, onChange, onRemove, inputRef }: 
           value={item.shortDescription}
           className="border-gray-300 px-4 py-2 border  w-full rounded-md text-gray-600 sm:text-sm focus:ring-gray-500 focus:border-gray-900 focus:outline-none"
           onChange={(e) => onChange(index, "shortDescription", e.target.value)}
+          required
         />
       </div>
 
@@ -45,6 +46,7 @@ export function ReceiptItemInput({ index, item, onChange, onRemove, inputRef }: 
             value={item.price}
             className="border-gray-300 px-4 py-2 flex-shrink flex-grow leading-normal w-px rounded rounded-l-none border relative text-gray-600 sm:text-sm focus:ring-gray-500 focus:border-gray-900 focus:outline-none"
             onChange={(e) => onChange(index, "price", e.target.value)}
+            required
           />
         </div>
       </div>
